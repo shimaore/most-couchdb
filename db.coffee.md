@@ -69,6 +69,17 @@ It provides exactly what this module needs, but no more.
         .accept 'json'
         .then ({body}) -> body
 
+Uses a server-side view, returns a stream containing one event for each row.
+
+      query: (app,view,params) ->
+        view_stream @uri, app, view, params
+
+Uses a wrapped client-side map function, returns a stream containing one event for each new row.
+Please provide `map_function(emit)`, wrapping the actual `map` function.
+
+      query_changes: (map_function,{since}) ->
+        changes_view map_function, @changes {live:true,include_docs:true,since}
+
       changes: (options = {}) ->
         {live,include_docs,since} = options
         live ?= true
@@ -113,18 +124,6 @@ In all cases we let it finish cleanly.
     {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
     agent = require 'superagent'
-
-When the stream finishes, we restart it with a small delay.
-
-    sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
-
-    autoRestart = (s) ->
-
-      most
-      .generate -> yield 200
-      .startWith 0
-      .map (delay) ->
-        await sleep delay
-        s()
-      .chain most.fromPromise
-      .switchLatest()
+    autoRestart = require './restart'
+    view_stream = require './view_stream'
+    changes_view = require './changes-view'
