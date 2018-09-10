@@ -4,6 +4,9 @@
   "description": "most (data streaming) for CouchDB",
   "main": "db.js",
   "scripts": {
+    "build": "npm install --only=dev && coffee -c *.coffee.md",
+    "prepublishOnly": "npm run build",
+    "pretest": "npm run build && coffee -c test/*.coffee.md",
     "test": "mocha"
   },
   "repository": {
@@ -19,6 +22,7 @@
   "license": "Unlicense",
   "dependencies": {
     "@most/create": "^2.0.1",
+    "concat-stream": "^1.6.2",
     "eventemitter2": "^5.0.1",
     "eventsource": "^1.0.7",
     "lru-cache": "^4.1.3",
@@ -29,5 +33,9 @@
     "oboe-stream-request": "^1.0.0",
     "request": "^2.88.0",
     "superagent": "^3.8.3"
+  },
+  "devDependencies": {
+    "coffeescript": "^2.3.1",
+    "mocha": "^5.2.0"
   }
 }
