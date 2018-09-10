@@ -31,7 +31,6 @@
           row.should.have.property 'doc'
 
       it 'should query-changes', ->
-        @timeout 4000
         map = (emit) ->
           (doc) ->
             if doc.name?
@@ -41,10 +40,12 @@
           .take 1
           .observe (row) ->
             row.should.have.property 'id', 'hallo'
+            row.should.have.property 'seq'
+            row.should.have.property 'doc'
             row.should.have.property 'key', 'pet'
             row.should.have.property 'value', 'dog'
 
-        await sleep 10
+        await sleep 500
 
         await db.put _id:'hallo', name:'dog'
         await result
