@@ -43,6 +43,18 @@ It provides exactly what this module needs, but no more.
 
         return
 
+      info: ->
+        @agent
+        .get @uri
+        .accept 'json'
+        .then ({body}) -> body
+
+      destroy: ->
+        @agent
+        .delete @uri
+        .accept 'json'
+        .then ({body}) -> body
+
 Insert a document in the database (document must have valid `_id` and `_rev` fields).
 
       put: (doc) ->

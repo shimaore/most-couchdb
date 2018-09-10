@@ -8,6 +8,10 @@
       it 'should create the database', ->
         await db.agent.put db.uri
 
+      it 'should get info', ->
+        info = await db.info()
+        info.should.have.property 'update_seq'
+
       it 'should put a document', ->
         await db.put _id:'hello', description:'world'
 
@@ -51,4 +55,5 @@
         await result
 
       it 'should delete the database', ->
-        await db.agent.delete db.uri
+        outcome = await db.destroy()
+        outcome.should.have.property 'ok', true
