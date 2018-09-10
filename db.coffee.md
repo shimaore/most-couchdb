@@ -11,7 +11,7 @@ It provides exactly what this module needs, but no more.
 
     options =
       max: 200
-      dispose: (key) -> ev.emit key
+      dispose: (key) -> lru_dispose.emit key
       maxAge: 20*60*1000
 
     lru_cache = LRU options
@@ -83,7 +83,7 @@ Uses a server-side view, returns a stream containing one event for each row.
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.
 Please provide `map_function(emit)`, wrapping the actual `map` function.
 
-      query_changes: (map_function,{since}) ->
+      query_changes: (map_function,{since} = {}) ->
         changes_view map_function, @changes {live:true,include_docs:true,since}
 
 Build a continuous `most.js` stream for changes.
@@ -109,10 +109,10 @@ In all cases we let it finish cleanly.
           uri.searchParams.set 'since', since
           fromEventSource new EventSource uri.toString()
           .continueWith ->
-            console.error 'retry', uri.host, uri.pathname, since
+            console.error 'changes-end', uri.host, uri.pathname, since
             most.never()
           .recoverWith (error) ->
-            console.error 'retry', (error.stack ? error), uri.host, uri.pathname, since
+            console.error 'changes-error', (error.stack ? error), uri.host, uri.pathname, since
             most.never()
 
         stream = autoRestart(s)
