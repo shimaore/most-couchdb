@@ -1,0 +1,7 @@
+image: node:alpine
+test:
+  services:
+  - couchdb
+  script:
+  - npm install
+  - npm test
