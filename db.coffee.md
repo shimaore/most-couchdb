@@ -69,9 +69,10 @@ Insert a document in the database (document must have valid `_id` and `_rev` fie
 
 Get a document, optionally at a given revision.
 
-      get: (_id,{rev} = {}) ->
+      get: (_id,options = {}) ->
         uri = new URL ec(_id), @uri
-        uri.searchParams.set 'rev', rev if rev?
+        for own k,v of options when v?
+          uri.searchParams.set k, v
         @agent
         .get uri.toString()
         .accept 'json'
