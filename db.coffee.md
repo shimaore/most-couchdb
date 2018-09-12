@@ -7,11 +7,11 @@ It provides exactly what this module needs, but no more.
     http = require 'http'
     https = require 'https'
 
-    lru_dispose = new EventEmitter2 newListener: false, verboseMemoryLeak: true
+    dispose = new EventEmitter2 newListener: false, verboseMemoryLeak: true
 
     options =
       max: 200
-      dispose: (key) -> lru_dispose.emit key
+      dispose: (key) -> dispose.emit key
       maxAge: 20*60*1000
 
     lru_cache = LRU options
@@ -28,10 +28,8 @@ It provides exactly what this module needs, but no more.
 
         if use_lru
           @cache = lru_cache
-          @limit = most.fromEvent @uri, lru_dispose
         else
           @cache = static_cache
-          @limit = most.never()
 
         switch
           when uri.match /^http:/
@@ -120,23 +118,21 @@ In all cases we let it finish cleanly.
 
         s = ->
           uri.searchParams.set 'since', since
-          fromEventSource new EventSource uri.toString()
-          .continueWith ->
+          source = new EventSource uri.toString()
+          fromEventSource source, ->
             console.error 'changes-end', uri.host, uri.pathname, since
-            most.never()
-          .recoverWith (error) ->
-            console.error 'changes-error', (error.stack ? error), uri.host, uri.pathname, since
-            most.never()
+            return
 
         stream = autoRestart(s)
+          .until most.fromEvent(@uri,dispose).take(1)
           .map ({data}) -> data
           .map JSON.parse
           .tap ({seq}) -> since = seq if seq?
-          .until @limit
           .multicast()
 
         @cache.set @uri, stream
         stream
+
 
     module.exports = CouchDB
     ec = encodeURIComponent
