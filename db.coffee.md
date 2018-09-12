@@ -113,17 +113,15 @@ Build a continuous `most.js` stream for changes.
         uri.searchParams.set 'heartbeat', true
         uri.searchParams.set 'include_docs', include_docs ? false
 
-The stream might end because the server disconnects or other errors.
-In all cases we let it finish cleanly.
+        uri.searchParams.set 'since', since
+        source = new EventSource uri.toString()
+        at_end = =>
+          @cache.delete @uri
+          return
 
-        s = ->
-          uri.searchParams.set 'since', since
-          source = new EventSource uri.toString()
-          fromEventSource source, ->
-            debug 'changes-end', uri.host, uri.pathname, since
-            return
+EventSource will reconnect.
 
-        stream = autoRestart(s)
+        stream = fromEventSource source, at_end
           .until most.fromEvent(@uri,dispose).take(1)
           .map ({data}) -> data
           .map JSON.parse
@@ -141,7 +139,6 @@ In all cases we let it finish cleanly.
     {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
     agent = require 'superagent'
-    autoRestart = require './restart'
     view_stream = require './view-stream'
     changes_view = require './changes-view'
     debug = (require 'debug') 'most-couchdb'
