@@ -22,9 +22,9 @@ It provides exactly what this module needs, but no more.
 
       constructor: (uri,use_lru) ->
         if uri.match /\/$/
-          @uri = uri
+          @uri = uri.slice 0, -1
         else
-          @uri = "#{uri}/"
+          @uri = uri
 
         if use_lru
           @cache = lru_cache
@@ -57,7 +57,7 @@ Insert a document in the database (document must have valid `_id` and `_rev` fie
 
       put: (doc) ->
         {_id} = doc
-        uri = new URL ec(_id), @uri
+        uri = new URL ec(_id), @uri+'/'
         @agent
         .put uri.toString()
         .type 'json'
@@ -68,7 +68,7 @@ Insert a document in the database (document must have valid `_id` and `_rev` fie
 Get a document, optionally at a given revision.
 
       get: (_id,options = {}) ->
-        uri = new URL ec(_id), @uri
+        uri = new URL ec(_id), @uri+'/'
         for own k,v of options when v?
           uri.searchParams.set k, v
         @agent
@@ -79,7 +79,7 @@ Get a document, optionally at a given revision.
 Delete a document based on its `_id` and `_rev` fields.
 
       delete: ({_id,_rev}) ->
-        uri = new URL ec(_id), @uri
+        uri = new URL ec(_id), @uri+'/'
         uri.searchParams.set 'rev', _rev if _rev?
         @agent
         .delete uri.toString()
@@ -110,7 +110,7 @@ Build a continuous `most.js` stream for changes.
           return @cache.get @uri
 
         since ?= 'now'
-        uri = new URL '_changes', @uri
+        uri = new URL '_changes', @uri+'/'
         uri.searchParams.set 'feed', 'eventsource'
         uri.searchParams.set 'heartbeat', true
         uri.searchParams.set 'include_docs', include_docs ? false
