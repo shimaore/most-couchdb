@@ -112,7 +112,7 @@ Build a continuous `most.js` stream for changes.
         since ?= 'now'
         uri = new URL '_changes', @uri+'/'
         uri.searchParams.set 'feed', 'eventsource'
-        uri.searchParams.set 'heartbeat', true
+        uri.searchParams.set 'heartbeat', 5*1000
         uri.searchParams.set 'include_docs', include_docs ? false
 
         uri.searchParams.set 'since', since
