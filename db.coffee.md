@@ -95,7 +95,9 @@ Uses a wrapped client-side map function, returns a stream containing one event f
 Please provide `map_function(emit)`, wrapping the actual `map` function.
 
       query_changes: (map_function,{since} = {}) ->
-        changes_view map_function, @changes {live:true,include_docs:true,since}
+        options = {live:true,include_docs:true,since}
+        source = @changes options
+        changes_view map_function, source, options
 
 Build a continuous `most.js` stream for changes.
 
@@ -116,6 +118,7 @@ Build a continuous `most.js` stream for changes.
         uri.searchParams.set 'since', since
         source = new EventSource uri.toString()
         at_end = =>
+          debug 'at_end', @uri, since
           @cache.delete @uri
           return
 
