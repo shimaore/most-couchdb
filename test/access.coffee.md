@@ -45,7 +45,7 @@
           .observe (row) ->
             row.should.have.property 'id', 'hallo'
             row.should.have.property 'seq'
-            row.should.have.property 'doc'
+            row.should.not.have.property 'doc'
             row.should.have.property 'key', 'pet'
             row.should.have.property 'value', 'dog'
 
@@ -60,7 +60,7 @@
             if doc.name?
               emit 'pet', doc.name
 
-        result = db.query_changes map
+        result = db.query_changes map, include_docs:true
           .take 1
           .observe (row) ->
             row.should.have.property 'id', 'bonjour'
