@@ -28,7 +28,7 @@ It provides exactly what this module needs, but no more.
 
         if use_lru
           @cache = lru_cache
-          @limit = most.fromEvent(@uri, lru_dispose).multicast()
+          @limit = most.fromEvent @uri, lru_dispose
         else
           @cache = static_cache
           @limit = most.never()
@@ -118,10 +118,9 @@ Build a continuous `most.js` stream for changes.
 The stream might end because the server disconnects or other errors.
 In all cases we let it finish cleanly.
 
-        s = =>
+        s = ->
           uri.searchParams.set 'since', since
           fromEventSource new EventSource uri.toString()
-          .until @limit
           .continueWith ->
             console.error 'changes-end', uri.host, uri.pathname, since
             most.never()
