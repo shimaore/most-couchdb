@@ -119,6 +119,7 @@ Build a continuous `most.js` stream for changes.
         source = new EventSource uri.toString()
         at_end = =>
           debug 'at_end', @uri, since
+          source.close()
           @cache.delete @uri
           return
 
