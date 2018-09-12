@@ -23,6 +23,7 @@
   "dependencies": {
     "@most/create": "^2.0.1",
     "concat-stream": "^1.6.2",
+    "debug": "^4.0.1",
     "eventemitter2": "^5.0.1",
     "eventsource": "^1.0.7",
     "lru-cache": "^4.1.3",

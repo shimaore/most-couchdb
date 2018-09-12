@@ -120,7 +120,7 @@ In all cases we let it finish cleanly.
           uri.searchParams.set 'since', since
           source = new EventSource uri.toString()
           fromEventSource source, ->
-            console.error 'changes-end', uri.host, uri.pathname, since
+            debug 'changes-end', uri.host, uri.pathname, since
             return
 
         stream = autoRestart(s)
@@ -144,3 +144,4 @@ In all cases we let it finish cleanly.
     autoRestart = require './restart'
     view_stream = require './view-stream'
     changes_view = require './changes-view'
+    debug = (require 'debug') 'most-couchdb'
