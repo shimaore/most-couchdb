@@ -133,12 +133,13 @@ Build a continuous `most.js` stream for changes.
         uri.searchParams.set 'since', since
 
         uri_string = uri.toString()
-        debug 'Event Source', uri_string, content
+        content_string = JSON.stringify content
+        debug 'Event Source', uri_string, content_string
 
         source = new EventSource uri_string,
           method: 'POST'
           headers: 'Content-Type': 'application/json'
-          content: JSON.stringify content
+          content: content_string
 
         at_end = =>
           debug 'at_end', @uri, since
