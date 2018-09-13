@@ -74,6 +74,27 @@
         await db.put _id:'bonjour', name:'cat'
         await result
 
+      it 'should query-changes (a third time)', ->
+        map = (emit) ->
+          (doc) ->
+            if doc.name?
+              emit 'pet', doc.name
+
+        result = db.query_changes map, include_docs:true, selector: _id: 'tag'
+          .take 1
+          .observe (row) ->
+            row.should.have.property 'id', 'tag'
+            row.should.have.property 'seq'
+            row.should.have.property 'doc'
+            row.should.have.property 'key', 'pet'
+            row.should.have.property 'value', 'lion'
+
+        await sleep 500
+
+        await db.put _id:'ignored', name:'mosquito'
+        await db.put _id:'tag', name:'lion'
+        await result
+
       it 'should delete the database', ->
         outcome = await db.destroy()
         outcome.should.have.property 'ok', true

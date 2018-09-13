@@ -95,8 +95,8 @@ Uses a wrapped client-side map function, returns a stream containing one event f
 Please provide `map_function(emit)`, wrapping the actual `map` function.
 
       query_changes: (map_function,options = {}) ->
-        {since} = options
-        source = @changes {live:true,include_docs:true,since}
+        {since,filter,selector,view} = options
+        source = @changes {live:true,include_docs:true,since,filter,selector,view}
         changes_view map_function, source, options
 
 Build a continuous `most.js` stream for changes.
@@ -111,12 +111,35 @@ Build a continuous `most.js` stream for changes.
 
         since ?= 'now'
         uri = new URL '_changes', @uri+'/'
+        content = {}
+
         uri.searchParams.set 'feed', 'eventsource'
         uri.searchParams.set 'heartbeat', 5*1000
         uri.searchParams.set 'include_docs', include_docs ? false
+        uri.searchParams.set 'conflicts', true if options.conflicts
+        uri.searchParams.set 'attachments', true if options.attachments
+
+        if options.filter?
+          uri.searchParams.set 'filter', options.filter
+
+        if options.selector?
+          uri.searchParams.set 'filter', '_selector'
+          content = selector: options.selector
+
+        if options.view?
+          uri.searchParams.set 'filter', '_view'
+          uri.searchParams.set 'view', options.view
 
         uri.searchParams.set 'since', since
-        source = new EventSource uri.toString()
+
+        uri_string = uri.toString()
+        debug 'Event Source', uri_string, content
+
+        source = new EventSource uri_string,
+          method: 'POST'
+          headers: 'Content-Type': 'application/json'
+          content: JSON.stringify content
+
         at_end = =>
           debug 'at_end', @uri, since
           source.close()
@@ -139,7 +162,7 @@ EventSource will reconnect.
     module.exports = CouchDB
     ec = encodeURIComponent
     most = require 'most'
-    EventSource = require 'eventsource'
+    EventSource = require '@shimaore/eventsource'
     {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
     agent = require 'superagent'
