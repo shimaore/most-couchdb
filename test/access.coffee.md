@@ -6,7 +6,7 @@
       CouchDB = require '..'
       db = new CouchDB 'http://admin:password@couchdb:5984/example'
       it 'should create the database', ->
-        await db.agent.put db.uri
+        await db.create()
 
       it 'should get info', ->
         info = await db.info()

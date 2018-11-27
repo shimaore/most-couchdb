@@ -48,6 +48,12 @@ It provides exactly what this module needs, but no more.
         .accept 'json'
         .then ({body}) -> body
 
+      create: ->
+        @agent
+        .put @uri
+        .accept 'json'
+        .then ({body}) -> body
+
       destroy: ->
         @agent
         .delete @uri
