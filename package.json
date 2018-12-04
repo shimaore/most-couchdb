@@ -23,17 +23,17 @@
   "dependencies": {
     "@most/create": "^2.0.1",
     "concat-stream": "^1.6.2",
-    "debug": "^4.0.1",
+    "debug": "^4.1.0",
     "eventemitter2": "^5.0.1",
     "@shimaore/eventsource": "^1.1.0",
-    "lru-cache": "^4.1.3",
+    "lru-cache": "^5.1.1",
     "most": "^1.7.3",
     "most-w3msg": "^2.0.0",
     "oboe": "^2.1.4",
     "oboe-as-stream": "^1.0.0",
     "oboe-stream-request": "^1.0.0",
     "request": "^2.88.0",
-    "superagent": "^3.8.3"
+    "superagent": "^4.0.0"
   },
   "devDependencies": {
     "chai": "^4.1.2",

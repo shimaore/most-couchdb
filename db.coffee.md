@@ -14,7 +14,7 @@ It provides exactly what this module needs, but no more.
       dispose: (key) -> dispose.emit key
       maxAge: 20*60*1000
 
-    lru_cache = LRU options
+    lru_cache = new LRU options
     lru_cache.delete = lru_cache.del
 
     static_cache = new Map()
