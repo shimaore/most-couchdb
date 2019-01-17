@@ -4,7 +4,7 @@
 
     describe 'Simple queries', ->
       CouchDB = require '..'
-      db = new CouchDB 'http://admin:password@couchdb:5984/example'
+      db = new CouchDB "http://#{process.env.COUCHDB_USER}:#{process.env.COUCHDB_PASSWORD}@couchdb:5984/example"
       it 'should create the database', ->
         await db.create()
 
