@@ -21,8 +21,14 @@
           await @put data
         return
 
+`merge`: update the fields indicated by `data` in an existing document indicated by `id`
+The update is only processed if the document would change.
+
       merge: (id,data) ->
         @__update id, data, (doc) -> Object.assign {}, doc
+
+`update`: update a document
+The update is only processed if the document would change.
 
       update: (data) ->
         @__update data._id, data, (doc) -> {_rev:doc._rev}
