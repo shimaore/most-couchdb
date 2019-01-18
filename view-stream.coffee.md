@@ -1,4 +1,4 @@
-CouchDB view as a stream of `row`
+CouchDB view as a Stream of `row`
 ---------------
 
     view_stream = (db_uri,app,view,params) ->
@@ -8,14 +8,15 @@ CouchDB view as a stream of `row`
       else
         uri = "#{db_uri}/#{view}"
 
-      n = oboe_stream_request url:uri,qs:params
+      req = Request
+        .get uri
+        .query params
 
-      r = oboe_stream 'rows.*', n
-      n.node 'rows.*', -> oboe.drop
-      r
+      rows req
+      .pipe map.obj ({value}) -> value
 
     module.exports = view_stream
-    oboe_stream = require 'oboe-as-stream'
-    oboe = require 'oboe'
-    request = require 'request'
-    oboe_stream_request = (require 'oboe-stream-request') oboe, request
+    json = require 'json-parser-transform'
+    rows = json.thru (prefix) -> prefix.length is 2 and prefix[0] is 'rows'
+    map = require 'through2-map'
+    Request = require 'superagent'

@@ -1,4 +1,4 @@
-    (require 'chai').should()
+    ({expect} = require 'chai').should()
 
     sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
 
@@ -27,12 +27,12 @@
 
       it 'should query', ->
         await db.put _id:'hola', name:'bear'
-        db.query '_all_docs', null, include_docs:true
+        await db.query null, '_all_docs', include_docs:true
         .take 1
         .observe (row) ->
-          row.should.have.property 'id', 'hola'
-          row.should.have.property 'value'
-          row.should.have.property 'doc'
+          (expect row).to.have.property 'id', 'hola'
+          (expect row).to.have.property 'value'
+          (expect row).to.have.property 'doc'
 
       it 'should find', ->
         await db.put _id:'yippee', name:'coocoo'

@@ -119,6 +119,9 @@ FIXME: stream the entire `find` response, using `bookmark`.
 Uses a server-side view, returns a stream containing one event for each row.
 
       query: (app,view,params) ->
+        most.fromEvent 'data', @queryStream app, view, params
+
+      queryStream: (app,view,params) ->
         view_stream @uri, app, view, params
 
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.
