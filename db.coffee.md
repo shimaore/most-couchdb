@@ -95,18 +95,37 @@ Delete a document based on its `_id` and `_rev` fields.
 
 Basic support for Mango queries and indexes
 
-FIXME: stream the entire `find` response, using `bookmark`.
+Non-blocking (most.js)
 
       find: (params) ->
+        most.fromEvent 'data', @findStream params
+
+Blocking (Stream)
+
+      findStream: (params) ->
         uri = new URL '_find', @uri+'/'
-        req = @agent
-          .post uri.toString()
-          .send params
-          .accept 'json'
-          .then ({body}) -> body.docs
-        most
-        .fromPromise req
-        .chain most.from
+
+        bookmark = null
+        limit = 100
+        done = false
+
+        agent = @agent
+
+        streamify do ->
+          while not done
+            {body} = await agent
+              .post uri.toString()
+              .send Object.assign params, {bookmark,limit}
+              .accept 'json'
+
+            {docs} = body
+            for doc from docs
+              yield doc
+
+            {bookmark} = body
+
+            done = docs.length < limit
+          return
 
       createIndex: (params) ->
         uri = new URL '_index', @uri+'/'
@@ -118,8 +137,12 @@ FIXME: stream the entire `find` response, using `bookmark`.
 
 Uses a server-side view, returns a stream containing one event for each row.
 
+Non-blocking (most.js)
+
       query: (app,view,params) ->
         most.fromEvent 'data', @queryStream app, view, params
+
+Blocking (Stream)
 
       queryStream: (app,view,params) ->
         view_stream @uri, app, view, params
@@ -203,3 +226,4 @@ EventSource will reconnect.
     view_stream = require './view-stream'
     changes_view = require './changes-view'
     debug = (require 'debug') 'most-couchdb'
+    streamify = require 'async-stream-generator'
