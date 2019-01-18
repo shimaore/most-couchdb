@@ -103,19 +103,21 @@ Non-blocking (most.js)
 Blocking (Stream)
 
       findStream: (params) ->
-        uri = new URL '_find', @uri+'/'
+        streamify @findAsyncIterable params
 
-        bookmark = null
-        limit = 100
-        done = false
+      findAsyncIterable: (params) ->
+        uri = new URL '_find', @uri+'/'
 
         agent = @agent
 
-        streamify do ->
+        do ->
+          bookmark = null
+          limit = 100
+          done = false
           while not done
             {body} = await agent
               .post uri.toString()
-              .send Object.assign params, {bookmark,limit}
+              .send Object.assign {bookmark,limit}, params
               .accept 'json'
 
             {docs} = body

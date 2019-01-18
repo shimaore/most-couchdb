@@ -42,6 +42,24 @@
           doc.should.have.property '_id', 'yippee'
           doc.should.have.property 'name', 'coocoo'
 
+      it 'should findStream', ->
+        S = db.findStream selector: name: 'coocoo'
+        len = 0
+        for await doc from S
+          doc.should.have.property '_id', 'yippee'
+          doc.should.have.property 'name', 'coocoo'
+          ++len
+        len.should.eql 1
+
+      it 'should findAsyncIterable', ->
+        S = db.findAsyncIterable selector: name: 'coocoo'
+        len = 0
+        for await doc from S
+          doc.should.have.property '_id', 'yippee'
+          doc.should.have.property 'name', 'coocoo'
+          ++len
+        len.should.eql 1
+
       it 'should query-changes', ->
         map = (emit) ->
           (doc) ->
