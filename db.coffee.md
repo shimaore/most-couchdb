@@ -93,6 +93,29 @@ Delete a document based on its `_id` and `_rev` fields.
         .accept 'json'
         .then ({body}) -> body
 
+Basic support for Mango queries and indexes
+
+FIXME: stream the entire `find` response, using `bookmark`.
+
+      find: (params) ->
+        uri = new URL '_find', @uri+'/'
+        req = @agent
+          .post uri.toString()
+          .send params
+          .accept 'json'
+          .then ({body}) -> body.docs
+        most
+        .fromPromise req
+        .chain most.from
+
+      createIndex: (params) ->
+        uri = new URL '_index', @uri+'/'
+        @agent
+        .post uri.toString()
+        .send params
+        .accept 'json'
+        .then ({body}) -> body
+
 Uses a server-side view, returns a stream containing one event for each row.
 
       query: (app,view,params) ->

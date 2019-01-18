@@ -34,6 +34,14 @@
           row.should.have.property 'value'
           row.should.have.property 'doc'
 
+      it 'should find', ->
+        await db.put _id:'yippee', name:'coocoo'
+        db.find selector: name: 'coocoo'
+        .take 1
+        .observe (doc) ->
+          doc.should.have.property '_id', 'yippee'
+          doc.should.have.property 'name', 'coocoo'
+
       it 'should query-changes', ->
         map = (emit) ->
           (doc) ->
