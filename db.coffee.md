@@ -98,7 +98,10 @@ Basic support for Mango queries and indexes
 Non-blocking (most.js)
 
       find: (params) ->
-        most.fromEvent 'data', @findStream params
+        S = @findStream params
+        most
+          .fromEvent 'data', S
+          .until most.fromEvent 'end', S
 
 Blocking (Stream)
 
@@ -142,7 +145,10 @@ Uses a server-side view, returns a stream containing one event for each row.
 Non-blocking (most.js)
 
       query: (app,view,params) ->
-        most.fromEvent 'data', @queryStream app, view, params
+        S = @queryStream app, view, params
+        most
+          .fromEvent 'data', S
+          .until most.fromEvent 'end', S
 
 Blocking (Stream)
 
