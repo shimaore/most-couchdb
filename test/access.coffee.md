@@ -26,13 +26,15 @@
         await db.delete doc
 
       it 'should query', ->
-        await db.put _id:'hola', name:'bear', nothing: null
+        await db.put _id:'hola', name:'bear', nothing: null, kisses: ['dog','cat']
         await db.query null, '_all_docs', include_docs:true
         .take 1
         .observe (row) ->
           (expect row).to.have.property 'id', 'hola'
           (expect row).to.have.property 'value'
           (expect row).to.have.property 'doc'
+          (expect row.doc).to.have.property 'kisses'
+          (expect row.doc.kisses).to.have.length 2
 
       it 'should find', ->
         await db.put _id:'yippee', name:'coocoo'
