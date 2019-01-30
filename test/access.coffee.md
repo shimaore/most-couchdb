@@ -26,7 +26,7 @@
         await db.delete doc
 
       it 'should query', ->
-        await db.put _id:'hola', name:'bear'
+        await db.put _id:'hola', name:'bear', nothing: null
         await db.query null, '_all_docs', include_docs:true
         .take 1
         .observe (row) ->
