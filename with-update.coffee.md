@@ -27,7 +27,7 @@ The update is only processed if the document would change.
       merge: (id,data) ->
         @__update id, data, (doc) -> Object.assign {}, doc
 
-`update`: update a document
+`update`: replace a document with new content
 The update is only processed if the document would change.
 
       update: (data) ->
