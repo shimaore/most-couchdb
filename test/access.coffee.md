@@ -21,9 +21,17 @@
         doc.should.have.property '_rev'
         doc.should.have.property 'description', 'world'
 
+      it 'should test for the document', ->
+        truth = await db.has 'hello'
+        truth.should.eql true
+
       it 'should delete the document', ->
         doc = await db.get 'hello'
         await db.delete doc
+
+      it 'should test for the document', ->
+        truth = await db.has 'hello'
+        truth.should.eql false
 
       it 'should query', ->
         await db.put _id:'hola', name:'bear', nothing: null, kisses: ['dog','cat']

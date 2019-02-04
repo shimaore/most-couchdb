@@ -83,6 +83,20 @@ Get a document, optionally at a given revision.
         .accept 'json'
         .then ({body}) -> body
 
+      has: (_id,options = {}) ->
+        uri = new URL ec(_id), @uri+'/'
+        for own k,v of options when v?
+          uri.searchParams.set k, v
+        @agent
+        .get uri.toString()
+        .accept 'json'
+        .then -> true
+        .catch (err) ->
+          if err.status is 404
+            false
+          else
+            Promise.reject err
+
 Delete a document based on its `_id` and `_rev` fields.
 
       delete: ({_id,_rev}) ->
