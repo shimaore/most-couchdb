@@ -225,13 +225,14 @@ Build a continuous `most.js` stream for changes.
           @cache.delete @uri
           return
 
-EventSource will reconnect.
+EventSource will reconnect, but not recover from parsing errors.
 
         stream = fromEventSource source, at_end
           .until most.fromEvent(@uri,dispose).take(1)
           .map ({data}) -> data
           .map JSON.parse
           .tap ({seq}) -> since = seq if seq?
+          .recoverWith => @changes Object.assign {since}, options
           .multicast()
 
         @cache.set @uri, stream
