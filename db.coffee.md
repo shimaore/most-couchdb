@@ -2,19 +2,18 @@ This is a minimalist CouchDB (HTTP) API
 It provides exactly what this module needs, but no more.
 
     LRU = require 'lru-cache'
-    {EventEmitter2} = require 'eventemitter2'
 
     http = require 'http'
     https = require 'https'
 
-    dispose = new EventEmitter2 newListener: false, verboseMemoryLeak: true
-
-    options =
+    lru_options =
       max: 200
-      dispose: (key) -> dispose.emit key
+      dispose: (key,{source}) ->
+        debug 'lru_cache: dispose', key
+        source.close()
       maxAge: 20*60*1000
 
-    lru_cache = new LRU options
+    lru_cache = new LRU lru_options
     lru_cache.delete = lru_cache.del
 
     static_cache = new Map()
@@ -180,20 +179,32 @@ Please provide `map_function(emit)`, wrapping the actual `map` function.
 Build a continuous `most.js` stream for changes.
 
       changes: (options = {}) ->
-        {live,include_docs,since} = options
-        live ?= true
-        throw new Error 'Only live streaming is supported' unless live is true
+        options = Object.assign {}, options
+        options.live ?= true
+        options.since ?= 'now'
 
-        if @cache.has @uri
-          return @cache.get @uri
+        @__changes options
+        .map ({data}) -> data
+        .map JSON.parse
+        .tap ({seq}) -> options.since = seq if seq?
+        .recoverWith =>
+          debug 'recoverWith'
+          @__changes options
+        .continueWith =>
+          debug 'continueWith'
+          if options.live
+            @__changes options
+          else
+            most.empty()
 
-        since ?= 'now'
+      __changes: (options) ->
+
         uri = new URL '_changes', @uri+'/'
         content = {}
 
         uri.searchParams.set 'feed', 'eventsource'
         uri.searchParams.set 'heartbeat', 5*1000
-        uri.searchParams.set 'include_docs', include_docs ? false
+        uri.searchParams.set 'include_docs', options.include_docs ? false
         uri.searchParams.set 'conflicts', true if options.conflicts
         uri.searchParams.set 'attachments', true if options.attachments
 
@@ -208,36 +219,45 @@ Build a continuous `most.js` stream for changes.
           uri.searchParams.set 'filter', '_view'
           uri.searchParams.set 'view', options.view
 
-        uri.searchParams.set 'since', since
+        uri.searchParams.set 'since', options.since
 
         uri_string = uri.toString()
-        content_string = JSON.stringify content
-        debug 'Event Source', uri_string, content_string
 
+        content_string = JSON.stringify content
+
+        key = [uri_string,content_string].join ' '
+
+        cacheable = options.live and options.since is 'now'
+        if cacheable and @cache.has key
+          debug '__changes: cached', key
+          return (@cache.get key).stream
+
+        debug '__changes: new', key
         source = new EventSource uri_string,
           method: 'POST'
           headers: 'Content-Type': 'application/json'
           content: content_string
 
-        at_end = =>
-          debug 'at_end', @uri, since
+        source.on 'open', ->
+          debug '__changes: open', key
+        source.on 'close', ->
+          debug '__changes: close', key
+        source.on 'error', (error) ->
+          debug '__changes: error', key, error
+
+        dispose = =>
+          debug '__changes: dispose', key
+          @cache.delete key
           source.close()
-          @cache.delete @uri
           return
 
-EventSource will reconnect, but not recover from parsing errors.
+        stream = fromEventSource source,dispose
 
-        stream = fromEventSource source, at_end
-          .until most.fromEvent(@uri,dispose).take(1)
-          .map ({data}) -> data
-          .map JSON.parse
-          .tap ({seq}) -> since = seq if seq?
-          .recoverWith => @changes Object.assign {since}, options
-          .multicast()
+        if cacheable
+          stream = stream.multicast()
+          @cache.set key, {stream,source}
 
-        @cache.set @uri, stream
         stream
-
 
     module.exports = CouchDB
     ec = encodeURIComponent

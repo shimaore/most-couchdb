@@ -90,7 +90,37 @@
         await db.put _id:'hallo', name:'dog'
         await result
 
-      it 'should query-changes (a second time)', ->
+      it 'should query-changes (twice)', ->
+        map = (emit) ->
+          (doc) ->
+            if doc.name?
+              emit 'pet', doc.name
+
+        result1 = db.query_changes map
+          .take 1
+          .observe (row) ->
+            row.should.have.property 'id', 'kitty'
+            row.should.have.property 'seq'
+            row.should.not.have.property 'doc'
+            row.should.have.property 'key', 'pet'
+            row.should.have.property 'value', 'poo'
+
+        result2 = db.query_changes map
+          .take 1
+          .observe (row) ->
+            row.should.have.property 'id', 'kitty'
+            row.should.have.property 'seq'
+            row.should.not.have.property 'doc'
+            row.should.have.property 'key', 'pet'
+            row.should.have.property 'value', 'poo'
+
+        await sleep 500
+
+        await db.put _id:'kitty', name:'poo'
+        await result1
+        await result2
+
+      it 'should query-changes (with docs explicitely)', ->
         map = (emit) ->
           (doc) ->
             if doc.name?
@@ -110,7 +140,7 @@
         await db.put _id:'bonjour', name:'cat'
         await result
 
-      it 'should query-changes (a third time)', ->
+      it 'should query-changes (with selector)', ->
         map = (emit) ->
           (doc) ->
             if doc.name?
