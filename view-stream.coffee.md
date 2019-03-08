@@ -12,11 +12,14 @@ CouchDB view as a Stream of `row`
         .get uri
         .query params
 
-      rows req
-      .pipe map.obj ({value}) -> value
+      pump(
+        (rows req),
+        (map.obj ({value}) -> value)
+      )
 
     module.exports = view_stream
     json = require 'json-parser-transform'
     rows = json.thru (prefix) -> prefix.length is 2 and prefix[0] is 'rows'
     map = require 'through2-map'
+    pump = require 'pump'
     Request = require 'superagent'
