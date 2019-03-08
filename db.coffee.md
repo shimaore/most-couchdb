@@ -18,8 +18,13 @@ It provides exactly what this module needs, but no more.
 
     static_cache = new Map()
 
-    Agent = require 'agentkeepalive'
-    global_agent = new Agent
+    {HttpsAgent} = Agent = require 'agentkeepalive'
+    http_agent = new Agent
+      maxSockets: 100           # per host
+      maxFreeSockets: 10        # per host
+      timeout: 60000            # active socket keepalive
+      freeSocketTimeout: 30000  # free socket keepalive
+    https_agent = new HttpsAgent
       maxSockets: 100           # per host
       maxFreeSockets: 10        # per host
       timeout: 60000            # active socket keepalive
@@ -27,7 +32,7 @@ It provides exactly what this module needs, but no more.
 
     class CouchDB
 
-      constructor: (uri,use_lru,agent = global_agent) ->
+      constructor: (uri,use_lru) ->
         if uri.match /\/$/
           @uri = uri.slice 0, -1
         else
@@ -38,7 +43,13 @@ It provides exactly what this module needs, but no more.
         else
           @cache = static_cache
 
-        @agent = Request.agent agent
+        switch
+          when uri.match /^http:/
+            @agent = Request.agent http_agent
+          when uri.match /^https:/
+            @agent = Request.agent https_agent
+          else
+            @agent = Request
         return
 
       info: ->
