@@ -28,7 +28,7 @@
     "concat-stream": "^1.6.2",
     "debug": "^4.1.1",
     "eventemitter2": "^5.0.1",
-    "json-parser-transform": "^1.0.4",
+    "json-parser-transform": "^1.0.5",
     "lru-cache": "^5.1.1",
     "most": "^1.7.3",
     "most-w3msg": "^2.0.0",
