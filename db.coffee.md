@@ -173,6 +173,7 @@ Non-blocking (most.js)
         most
           .fromEvent 'data', S
           .until most.fromEvent 'end', S
+          .merge most.fromEvent('error', S).map most.throwError
 
 Blocking (Stream)
 
