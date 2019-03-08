@@ -18,9 +18,16 @@ It provides exactly what this module needs, but no more.
 
     static_cache = new Map()
 
+    Agent = require 'agentkeepalive'
+    global_agent = new Agent
+      maxSockets: 100           # per host
+      maxFreeSockets: 10        # per host
+      timeout: 60000            # active socket keepalive
+      freeSocketTimeout: 30000  # free socket keepalive
+
     class CouchDB
 
-      constructor: (uri,use_lru) ->
+      constructor: (uri,use_lru,agent = global_agent) ->
         if uri.match /\/$/
           @uri = uri.slice 0, -1
         else
@@ -31,14 +38,7 @@ It provides exactly what this module needs, but no more.
         else
           @cache = static_cache
 
-        switch
-          when uri.match /^http:/
-            @agent = agent.agent http.globalAgent
-          when uri.match /^https:/
-            @agent = agent.agent https.globalAgent
-          else
-            @agent = agent
-
+        @agent = Request.agent agent
         return
 
       info: ->
@@ -265,7 +265,7 @@ Build a continuous `most.js` stream for changes.
     EventSource = require '@shimaore/eventsource'
     {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
-    agent = require 'superagent'
+    Request = require 'superagent'
     view_stream = require './view-stream'
     changes_view = require './changes-view'
     debug = (require 'debug') 'most-couchdb'
