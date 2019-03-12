@@ -39,6 +39,25 @@
           .observe -> count++
         (expect count).to.eql 0
 
+      it.skip 'should queryStream (error)', ->
+        count = 0
+        db
+        .queryStream null, '_all_doc', include_docs:true
+        .on 'error', (error) ->
+          count++
+        (expect count).to.eql 1
+
+      it.skip 'should query (error)', ->
+        count = 0
+        await db.query null, '_all_doc', include_docs:true
+          .recoverWith (error) ->
+            count++
+            most.empty()
+          .observe (value) ->
+            count++
+
+        (expect count).to.eql 1
+
       it 'should query', ->
         await db.put _id:'hola', name:'bear', nothing: null, kisses: ['dog','cat']
         await db.query null, '_all_docs', include_docs:true
