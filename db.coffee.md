@@ -172,8 +172,8 @@ Non-blocking (most.js)
         S = @queryStream app, view, params
         most
           .fromEvent 'data', S
-          .until most.fromEvent 'end', S
           .merge most.fromEvent('error', S).map most.throwError
+          .until most.fromEvent 'end', S
 
 Blocking (Stream)
 

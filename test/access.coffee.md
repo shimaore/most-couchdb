@@ -33,6 +33,12 @@
         truth = await db.has 'hello'
         truth.should.eql false
 
+      it 'should query (no docs)', ->
+        count = 0
+        await db.query null, '_all_docs', include_docs:true
+          .observe -> count++
+        (expect count).to.eql 0
+
       it 'should query', ->
         await db.put _id:'hola', name:'bear', nothing: null, kisses: ['dog','cat']
         await db.query null, '_all_docs', include_docs:true
