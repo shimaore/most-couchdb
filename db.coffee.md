@@ -178,7 +178,7 @@ Non-blocking (most.js)
 Blocking (Stream)
 
       queryStream: (app,view,params) ->
-        view_stream @uri, app, view, params
+        view_stream @uri, app, view, stringify params
 
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.
 Please provide `map_function(emit)`, wrapping the actual `map` function.
@@ -282,3 +282,11 @@ Build a continuous `most.js` stream for changes.
     changes_view = require './changes-view'
     debug = (require 'debug') 'most-couchdb'
     streamify = require 'async-stream-generator'
+
+    stringify = (params) ->
+      params = Object.assign {}, params ? {}
+      ['endkey','end_key','key','keys','startkey','start_key'].forEach (field) ->
+        if field of params
+          params[field] = JSON.stringify params[field]
+        return
+      params

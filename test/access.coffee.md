@@ -198,6 +198,10 @@
         await db.put _id:'tag', name:'lion'
         await result
 
+      it 'should query (with params)', ->
+        for await row from db.queryStream null, '_all_docs', include_docs:true, startkey: 'hall', endkey: 'hello'
+          (expect row).to.have.property 'id', 'hallo'
+
       it 'should delete the database', ->
         outcome = await db.destroy()
         outcome.should.have.property 'ok', true
