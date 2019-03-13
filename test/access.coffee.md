@@ -69,6 +69,18 @@
           (expect row.doc).to.have.property 'kisses'
           (expect row.doc.kisses).to.have.length 2
 
+      it 'should queryStream', ->
+        S = db.queryStream null, '_all_docs', include_docs:true
+        len = 0
+        for await row from S
+          (expect row).to.have.property 'id', 'hola'
+          (expect row).to.have.property 'value'
+          (expect row).to.have.property 'doc'
+          (expect row.doc).to.have.property 'kisses'
+          (expect row.doc.kisses).to.have.length 2
+          ++len
+        len.should.eql 1
+
       it 'should find', ->
         await db.put _id:'yippee', name:'coocoo'
         db.find selector: name: 'coocoo'
