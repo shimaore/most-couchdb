@@ -25,10 +25,9 @@
     "@shimaore/eventsource": "^1.1.0",
     "agentkeepalive": "^4.0.2",
     "async-stream-generator": "^1.0.3",
-    "concat-stream": "^1.6.2",
     "debug": "^4.1.1",
     "eventemitter2": "^5.0.1",
-    "json-parser-transform": "^1.0.6",
+    "json-parser-transform": "^1.0.7",
     "lru-cache": "^5.1.1",
     "most": "^1.7.3",
     "most-w3msg": "^2.0.0",
@@ -39,6 +38,6 @@
   "devDependencies": {
     "chai": "^4.1.2",
     "coffeescript": "^2.3.1",
-    "mocha": "^5.2.0"
+    "mocha": "^6.0.2"
   }
 }
