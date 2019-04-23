@@ -23,7 +23,6 @@
   "dependencies": {
     "@most/create": "^2.0.1",
     "@shimaore/eventsource": "^1.1.0",
-    "agentkeepalive": "^4.0.2",
     "async-stream-generator": "^1.0.3",
     "debug": "^4.1.1",
     "eventemitter2": "^5.0.1",

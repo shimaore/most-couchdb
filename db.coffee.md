@@ -18,17 +18,18 @@ It provides exactly what this module needs, but no more.
 
     static_cache = new Map()
 
-    {HttpsAgent} = Agent = require 'agentkeepalive'
-    http_agent = new Agent
-      maxSockets: 100           # per host
-      maxFreeSockets: 10        # per host
-      timeout: 60000            # active socket keepalive
-      freeSocketTimeout: 30000  # free socket keepalive
-    https_agent = new HttpsAgent
-      maxSockets: 100           # per host
-      maxFreeSockets: 10        # per host
-      timeout: 60000            # active socket keepalive
-      freeSocketTimeout: 30000  # free socket keepalive
+    http_agent = new http.Agent
+      keepAlive: true
+      # keepAliveMsecs: 100
+      maxSockets: 768           # per host
+      maxFreeSockets: 256       # per host
+      timeout: 30000            # active socket keepalive
+    https_agent = new https.Agent
+      keepAlive: true
+      # keepAliveMsecs: 100
+      maxSockets: 768           # per host
+      maxFreeSockets: 256       # per host
+      timeout: 30000            # active socket keepalive
 
     class CouchDB
 
