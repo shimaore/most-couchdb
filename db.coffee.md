@@ -179,7 +179,53 @@ Non-blocking (most.js)
 Blocking (Stream)
 
       queryStream: (app,view,params) ->
-        view_stream @uri, app, view, stringify params
+        streamify @queryAsyncIterable app, view, params
+
+      queryAsyncIterable: (app,view,params) ->
+        if app?
+          uri = new URL "_design/#{app}/_view/#{view}", @uri+'/'
+        else
+          uri = new URL view, @uri+'/'
+
+        agent = @agent
+
+        do ->
+          limit = 100
+
+          query = Object.assign {}, params
+          if query.start_key?
+            query.startkey ?= query.start_key
+            delete query.start_key
+
+          done = false
+          while not done
+
+We do not optimize views with `key` or `keys` (in other words don't use this method for `key` or `keys`).
+
+            unless params.key? or params.keys?
+              query.limit ?= limit
+              query.sorted = true
+
+            {body} = await agent
+              .get uri.toString()
+              .query stringify query
+              .accept 'json'
+
+            {rows} = body
+            if rows.length is limit
+              next_row = rows.pop()
+            else
+              next_row = null
+
+            for row in rows
+              yield row
+
+            if next_row?
+              query.startkey = next_row.key
+              query.startkey_docid = next_row.id
+            else
+              done = true
+          return
 
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.
 Please provide `map_function(emit)`, wrapping the actual `map` function.
@@ -279,7 +325,6 @@ Build a continuous `most.js` stream for changes.
     {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
     Request = require 'superagent'
-    view_stream = require './view-stream'
     changes_view = require './changes-view'
     debug = (require 'debug') 'most-couchdb'
     streamify = require 'async-stream-generator'

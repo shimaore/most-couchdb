@@ -81,6 +81,68 @@
           ++len
         len.should.eql 1
 
+      it 'should queryAsyncIterable', ->
+        S = db.queryAsyncIterable null, '_all_docs', include_docs:true
+        len = 0
+        for await row from S
+          (expect row).to.have.property 'id', 'hola'
+          (expect row).to.have.property 'value'
+          (expect row).to.have.property 'doc'
+          (expect row.doc).to.have.property 'kisses'
+          (expect row.doc.kisses).to.have.length 2
+          ++len
+        len.should.eql 1
+
+      [1,10,98,99,100,101,102,198,199,200,201,202,2367].forEach (number) ->
+        it "should queryAsyncIterable (pages) for #{number}", ->
+          await db.put
+            _id: "_design/test#{number}"
+            language: 'coffeescript'
+            views:
+              pages:
+                map: """
+                  (doc) ->
+                    [1..#{number}].map emit
+                """
+          S = db.queryAsyncIterable "test#{number}", 'pages', include_docs:true
+          len = 0
+          for await row from S
+            (expect row).to.have.property 'id', 'hola'
+            (expect row).to.have.property 'value'
+            (expect row).to.have.property 'doc'
+            (expect row.doc).to.have.property 'kisses'
+            (expect row.doc.kisses).to.have.length 2
+            ++len
+          len.should.eql number
+
+      it "should queryAsyncIterable (with restrictions)", ->
+          S = db.queryAsyncIterable "test2367", 'pages', start_key: 34, endkey: 168, inclusive_end:false
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 168-34
+
+      it "should queryAsyncIterable (with restrictions)", ->
+          S = db.queryAsyncIterable "test2367", 'pages', start_key: 34
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 2367-34+1
+
+      it "should queryAsyncIterable (with restrictions)", ->
+          S = db.queryAsyncIterable "test2367", 'pages', endkey: 28, inclusive_end:true
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 28
+
+      it "should queryAsyncIterable (reverse)", ->
+          S = db.queryAsyncIterable "test2367", 'pages', startkey: 168, endkey: 34, inclusive_end:false, descending:true
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 168-34
+
       it 'should find', ->
         await db.put _id:'yippee', name:'coocoo'
         db.find selector: name: 'coocoo'

@@ -4,4 +4,3 @@
         require '../db'
         require '../with-update'
         require '../restart'
-        require '../view-stream'
