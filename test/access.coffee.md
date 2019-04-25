@@ -264,6 +264,19 @@
         for await row from db.queryStream null, '_all_docs', include_docs:true, startkey: 'hall', endkey: 'hello'
           (expect row).to.have.property 'id', 'hallo'
 
+      it 'should put attachment', ->
+        await db.put _id:'bob'
+        {_rev} = await db.get 'bob'
+        await db.putAttachment 'bob', 'hello/world.png', _rev, new Buffer([0xbe,0xfe]), 'image/png'
+        buf = await db.getAttachment 'bob', 'hello/world.png'
+        expect(buf[0]).to.equal 0xbe
+        expect(buf[1]).to.equal 0xfe
+        {_rev,_attachments} = await db.get 'bob'
+        expect(_attachments).to.have.property 'hello/world.png'
+        await db.deleteAttachment 'bob', 'hello/world.png', _rev
+        {_attachments} = await db.get 'bob'
+        expect(_attachments).to.be.undefined
+
       it 'should delete the database', ->
         outcome = await db.destroy()
         outcome.should.have.property 'ok', true

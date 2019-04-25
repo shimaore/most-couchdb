@@ -318,6 +318,30 @@ Build a continuous `most.js` stream for changes.
 
         stream
 
+      getAttachment: (_id,file) ->
+        uri = new URL ec(_id)+'/'+encodeURI(file), @uri+'/'
+        @agent
+        .get uri.toString()
+        .then ({body}) -> body
+
+      putAttachment: (_id,file,rev,buf,type) ->
+        uri = new URL ec(_id)+'/'+encodeURI(file), @uri+'/'
+        @agent
+        .put uri.toString()
+        .query {rev}
+        .type type
+        .accept 'json'
+        .send buf
+        .then ({body}) -> body
+
+      deleteAttachment: (_id,file,rev) ->
+        uri = new URL ec(_id)+'/'+encodeURI(file), @uri+'/'
+        @agent
+        .delete uri.toString()
+        .query {rev}
+        .accept 'json'
+        .then ({body}) -> body
+
     module.exports = CouchDB
     ec = encodeURIComponent
     most = require 'most'
