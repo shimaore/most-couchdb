@@ -33,7 +33,7 @@ It provides exactly what this module needs, but no more.
 
     class CouchDB
 
-      constructor: (uri,use_lru) ->
+      constructor: (uri,use_lru,@limit = 100) ->
         if uri.match /\/$/
           @uri = uri.slice 0, -1
         else
@@ -137,10 +137,10 @@ Blocking (Stream)
         uri = new URL '_find', @uri+'/'
 
         agent = @agent
+        limit = @limit
 
         do ->
           bookmark = null
-          limit = 100
           done = false
           while not done
             {body} = await agent
@@ -188,43 +188,78 @@ Blocking (Stream)
           uri = new URL view, @uri+'/'
 
         agent = @agent
+        limit = @limit
+
+        query = Object.assign {}, params
+
+Normalize the request
+
+        if query.startkey?
+          query.start_key ?= query.startkey
+          delete query.startkey
+
+        if query.endkey?
+          query.end_key ?= query.endkey
+          delete query.endkey
+
+        if query.key?
+          query.keys = [query.key]
+          delete query.key
+
+Build the ranges
+
+        switch
+          when query.keys?
+            {keys} = query
+            ranges = ->
+              for key in keys
+                yield start_key:key,end_key:key,inclusive_end:true
+              return
+          else
+            {start_key,end_key,inclusive_end} = query
+            ranges = ->
+              yield {start_key,end_key,inclusive_end}
+              return
+
+        delete query.keys
+        delete query.start_key
+        delete query.end_key
+        delete query.inclusive_end
 
         do ->
-          limit = 100
 
-          query = Object.assign {}, params
-          if query.start_key?
-            query.startkey ?= query.start_key
-            delete query.start_key
+          for range from ranges()
+            query.startkey = range.start_key
+            query.endkey = range.end_key
+            query.inclusive_end = range.inclusive_end
 
-          done = false
-          while not done
+            done = false
+            while not done
 
-We do not optimize views with `key` or `keys` (in other words don't use this method for `key` or `keys`).
-
-            unless params.key? or params.keys?
               query.limit ?= limit
               query.sorted = true
 
-            {body} = await agent
-              .get uri.toString()
-              .query stringify query
-              .accept 'json'
+              {body} = await agent
+                .get uri.toString()
+                .query stringify query
+                .accept 'json'
 
-            {rows} = body
-            if rows.length is limit
-              next_row = rows.pop()
-            else
-              next_row = null
+              {rows} = body
 
-            for row in rows
-              yield row
+              if rows.length is limit
+                next_row = rows.pop()
+              else
+                next_row = null
 
-            if next_row?
-              query.startkey = next_row.key
-              query.startkey_docid = next_row.id
-            else
-              done = true
+              for row in rows
+                yield row
+
+              if next_row?
+                query.startkey = next_row.key
+                query.startkey_docid = next_row.id
+              else
+                done = true
+                delete query.startkey_docid
           return
 
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.

@@ -143,6 +143,21 @@
             ++len
           len.should.eql 168-34
 
+      it "should queryAsyncIterable (key)", ->
+          S = db.queryAsyncIterable "test2367", 'pages', key: 34
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 1
+
+      it "should queryAsyncIterable (keys)", ->
+          @timeout 4000
+          S = db.queryAsyncIterable "test2367", 'pages', keys: [34...664]
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 664-34
+
       it 'should find', ->
         await db.put _id:'yippee', name:'coocoo'
         db.find selector: name: 'coocoo'
@@ -276,6 +291,40 @@
         await db.deleteAttachment 'bob', 'hello/world.png', _rev
         {_attachments} = await db.get 'bob'
         expect(_attachments).to.be.undefined
+
+      it 'should insert a whole bunch of documents', ->
+        @timeout 20000
+        for i in [1..1000]
+          await db.put _id:"cat #{i.toString(10).padStart(4)}", countme: true
+        await db.put
+          _id: "_design/countme"
+          language: 'coffeescript'
+          views:
+            pages:
+              map: """
+                (doc) ->
+                  if doc.countme
+                    emit 1
+                    emit 2
+                    emit 3
+              """
+
+      it "should queryAsyncIterable (identical keys)", ->
+          @timeout 4000
+          S = db.queryAsyncIterable 'countme', 'pages', key: 3
+          len = 0
+          for await row from S
+            row.should.have.property 'key', 3
+            ++len
+          len.should.eql 1000
+
+      it "should queryAsyncIterable (identical keys)", ->
+          @timeout 4000
+          S = db.queryAsyncIterable 'countme', 'pages', keys: [1,2]
+          len = 0
+          for await row from S
+            ++len
+          len.should.eql 2000
 
       it 'should delete the database', ->
         outcome = await db.destroy()
