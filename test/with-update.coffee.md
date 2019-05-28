@@ -30,6 +30,31 @@
         doc.should.have.property 'name', 'iua'
         doc.should.have.property '_rev', rev
 
+      it 'should (bulk) update a document', ->
+        await db.put _id:'lion'
+        await db.bulk_update [
+          {_id: 'lion', name: 'gri'}
+          {_id: 'bear', name: 'gro'}
+        ]
+        doc = await db.get 'lion'
+        doc.should.have.property 'name', 'gri'
+        rev1 = doc._rev
+
+        doc = await db.get 'bear'
+        doc.should.have.property 'name', 'gro'
+        rev2 = doc._rev
+
+        await db.bulk_update [
+          {_id: 'lion', name: 'gri'}
+          {_id: 'bear', name: 'gro'}
+        ]
+        doc = await db.get 'lion'
+        doc.should.have.property 'name', 'gri'
+        doc.should.have.property '_rev', rev1
+        doc = await db.get 'bear'
+        doc.should.have.property 'name', 'gro'
+        doc.should.have.property '_rev', rev2
+
       it 'should merge a document', ->
         await db.put _id:'tiger'
         await db.merge 'tiger',
@@ -48,6 +73,39 @@
         doc = await db.get 'tiger'
         doc.should.have.property 'name', 'iua'
         doc.should.have.property '_rev', rev
+
+      it 'should (bulk) merge a document', ->
+        await db.put _id:'cat'
+        await db.bulk_merge ['tiger','cat'], [
+          {name: 'gui'}
+          {name: 'pop'}
+        ]
+        doc = await db.get 'tiger'
+        doc.should.have.property 'name', 'gui'
+        doc = await db.get 'cat'
+        doc.should.have.property 'name', 'pop'
+
+        await db.bulk_merge ['tiger','cat'], [
+          {name: 'iua'}
+          {name: 'plp'}
+        ]
+        doc = await db.get 'tiger'
+        doc.should.have.property 'name', 'iua'
+        rev1 = doc._rev
+        doc = await db.get 'cat'
+        doc.should.have.property 'name', 'plp'
+        rev2 = doc._rev
+
+        await db.bulk_merge ['tiger','cat'], [
+          {name: 'iua'}
+          {name: 'plp'}
+        ]
+        doc = await db.get 'tiger'
+        doc.should.have.property 'name', 'iua'
+        doc.should.have.property '_rev', rev1
+        doc = await db.get 'cat'
+        doc.should.have.property 'name', 'plp'
+        doc.should.have.property '_rev', rev2
 
       it 'should delete the database', ->
         outcome = await db.destroy()
