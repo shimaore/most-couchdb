@@ -31,7 +31,6 @@
         doc.should.have.property '_rev', rev
 
       it 'should (bulk) update a document', ->
-        await db.put _id:'lion'
         await db.bulk_update [
           {_id: 'lion', name: 'gri'}
           {_id: 'bear', name: 'gro'}

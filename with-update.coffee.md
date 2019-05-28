@@ -15,7 +15,7 @@ Single-record merge / update
 ----------------------------
 
       __merge: (doc,data,map) ->
-        if doc._rev?
+        if doc?._rev?
           new_doc = Object.assign (map doc), data
           if not isDeepStrictEqual new_doc, doc
             @count.changed++
