@@ -143,10 +143,15 @@ Blocking (Stream)
           bookmark = null
           done = false
           while not done
-            {body} = await agent
-              .post uri.toString()
-              .send Object.assign {bookmark,limit}, params
-              .accept 'json'
+            body = null
+            until body?
+              {body} = await agent
+                .post uri.toString()
+                .send Object.assign {bookmark,limit}, params
+                .accept 'json'
+                .catch (error) ->
+                  debug 'findAsyncIterable: error', app, view, params, error
+                  body: null
 
             {docs} = body
             for doc from docs
@@ -239,10 +244,15 @@ Build the ranges
               query.limit ?= limit
               query.sorted = true
 
-              {body} = await agent
-                .get uri.toString()
-                .query stringify query
-                .accept 'json'
+              body = null
+              until body?
+                {body} = await agent
+                  .get uri.toString()
+                  .query stringify query
+                  .accept 'json'
+                  .catch (error) ->
+                    debug 'queryAsyncIterable: error', app, view, params, error
+                    body: null
 
               {rows} = body
 
