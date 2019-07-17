@@ -1,6 +1,6 @@
 {
   "name": "most-couchdb",
-  "version": "3.3.1",
+  "version": "3.3.2",
   "description": "most (data streaming) for CouchDB",
   "main": "db.js",
   "scripts": {
