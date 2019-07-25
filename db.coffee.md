@@ -31,6 +31,8 @@ It provides exactly what this module needs, but no more.
       maxFreeSockets: 256       # per host
       timeout: 30000            # active socket keepalive
 
+    sleep = (timeout) -> new Promise (resolve) -> setTimeout resolve, timeout
+
     class CouchDB
 
       constructor: (uri,use_lru,@limit = 100) ->
@@ -152,6 +154,10 @@ Blocking (Stream)
                 .catch (error) ->
                   debug 'findAsyncIterable: error', app, view, params, error
                   body: null
+              unless body?
+                await sleep 100
+              else
+                await sleep 1
 
             {docs} = body
             for doc from docs
@@ -253,6 +259,10 @@ Build the ranges
                   .catch (error) ->
                     debug 'queryAsyncIterable: error', app, view, params, error
                     body: null
+                unless body?
+                  await sleep 100
+                else
+                  await sleep 1
 
               {rows} = body
 
