@@ -153,7 +153,10 @@ Blocking (Stream)
                 .accept 'json'
                 .catch (error) ->
                   debug 'findAsyncIterable: error', app, view, params, error
-                  body: null
+                  if error.status is 404
+                    body: docs: []
+                  else
+                    body: null
               unless body?
                 await sleep 100
               else
@@ -258,7 +261,10 @@ Build the ranges
                   .accept 'json'
                   .catch (error) ->
                     debug 'queryAsyncIterable: error', app, view, params, error
-                    body: null
+                    if error.status is 404
+                      body: docs: []
+                    else
+                      body: null
                 unless body?
                   await sleep 100
                 else
