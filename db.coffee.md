@@ -262,7 +262,7 @@ Build the ranges
                   .catch (error) ->
                     debug 'queryAsyncIterable: error', app, view, params, error
                     if error.status is 404
-                      body: docs: []
+                      body: rows: []
                     else
                       body: null
                 unless body?
