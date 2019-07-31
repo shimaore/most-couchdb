@@ -125,10 +125,7 @@ Basic support for Mango queries and indexes
 Non-blocking (most.js)
 
       find: (params) ->
-        S = @findStream params
-        most
-          .fromEvent 'data', S
-          .until most.fromEvent 'end', S
+        mostify @findStream params
 
 Blocking (Stream)
 
@@ -184,16 +181,14 @@ Uses a server-side view, returns a stream containing one event for each row.
 Non-blocking (most.js)
 
       query: (app,view,params) ->
-        S = @queryStream app, view, params
-        most
-          .fromEvent 'data', S
-          .merge most.fromEvent('error', S).map most.throwError
-          .until most.fromEvent 'end', S
+        mostify @queryStream app, view, params
 
 Blocking (Stream)
 
       queryStream: (app,view,params) ->
         streamify @queryAsyncIterable app, view, params
+
+Async Iterable
 
       queryAsyncIterable: (app,view,params) ->
         if app?
@@ -414,7 +409,6 @@ Build a continuous `most.js` stream for changes.
 
     module.exports = CouchDB
     ec = encodeURIComponent
-    most = require 'most'
     EventSource = require '@shimaore/eventsource'
     {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
@@ -430,3 +424,10 @@ Build a continuous `most.js` stream for changes.
           params[field] = JSON.stringify params[field]
         return
       params
+
+    most = require 'most'
+    mostify = (S) ->
+      data   = most.fromEvent 'data', S
+      errors = most.fromEvent('error', S).map most.throwError
+      end    = most.fromEvent 'end', S
+      data.merge(errors).until end
