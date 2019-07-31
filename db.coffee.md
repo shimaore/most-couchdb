@@ -291,97 +291,84 @@ Please provide `map_function(emit)`, wrapping the actual `map` function.
         source = @changes {live:true,include_docs:true,since,filter,selector,view}
         changes_view map_function, source, options
 
-Build a continuous `most.js` stream for changes.
+Build a continuous, non-blocking (`most.js`) stream for changes.
 
-      changes: (options = {}) ->
-        options = Object.assign {}, options
-        options.live ?= true
-        options.since ?= 'now'
+      changes: (options) ->
+        mostify @changesStream options
 
-        @__changes options
-        .map ({data}) -> data
-        .map JSON.parse
-        .tap ({seq}) -> options.since = seq if seq?
-        .recoverWith =>
-          debug 'recoverWith'
-          @__changes options
-        .continueWith =>
-          debug 'continueWith'
-          if options.live
-            @__changes options
-          else
-            most.empty()
+Blocking (Stream)
 
-      __changes: (options) ->
+      changesStream: (options) ->
+        streamify @changesAsyncIterable options
 
+Async Iterable
+
+      changesAsyncIterable: (options) ->
         uri = new URL '_changes', @uri+'/'
+
+        agent = @agent
+        limit = @limit
+
+        query = {}
         content = {}
-        key_options = {}
 
-        key_options.include_docs = true if options.include_docs
-        key_options.conflicts    = true if options.conflicts
-        key_options.attachments  = true if options.attachments
+        query.feed = 'longpoll'
+        query.heartbeat = 5*1000
+        query.timeout = 30*1000
 
-        uri.searchParams.set 'feed', 'eventsource'
-        uri.searchParams.set 'heartbeat', 5*1000
-        uri.searchParams.set 'timeout', 30*1000
-        uri.searchParams.set 'include_docs', true if key_options.include_docs
-        uri.searchParams.set 'conflicts',    true if key_options.conflicts
-        uri.searchParams.set 'attachments',  true if key_options.attachments
+        options ?= {}
+        query.include_docs = true if options.include_docs
+        query.conflicts = true if options.conflicts
+        query.attachments = true if options.attachments
 
-        if options.filter?
-          uri.searchParams.set 'filter', options.filter
-          key_options.filter = options.filter
+        query.filter = options.filter if options.filter?
 
-        if options.selector?
-          uri.searchParams.set 'filter', '_selector'
-          content =selector: options.selector
-          key_options.selector = options.selector
+        switch
+          when options.selector?
+            query.filter = '_selector'
+            content = selector: options.selector
 
-        if options.view?
-          uri.searchParams.set 'filter', '_view'
-          uri.searchParams.set 'view', options.view
-          key_options.view = options.view
+          when options.view?
+            query.filter = '_view'
+            query.view = options.view
 
-        uri.searchParams.set 'since', options.since
+          when options.doc_ids?
+            query.filter = '_doc_ids'
+            content = doc_ids: options.doc_ids
 
-        uri_string = uri.toString()
+        query.since = options.since ? 'now'
 
-        key_string = JSON.stringify key_options
+        do ->
+          done = false
+          while not done
+            body = null
+            until body?
+              {body} = await agent
+                .post uri.toString()
+                .query stringify query
+                .send content
+                .accept 'json'
+                .catch (error) ->
+                  debug 'changesAsyncIterable: error', options, error
+                  if error.status is 404
+                    body: results:[], last_seq: null
+                  else
+                    body: null
+              unless body?
+                await sleep 100
+              else
+                await sleep 1
 
-        key = [uri_string,key_string].join ' '
+            {results} = body
+            for result in results
+              yield result
 
-        cacheable = options.live and options.since is 'now'
-        if cacheable and @cache.has key
-          debug '__changes: cached', key
-          return (@cache.get key).stream
-
-        debug '__changes: new', key
-        source = new EventSource uri_string,
-          method: 'POST'
-          headers: 'Content-Type': 'application/json'
-          content: JSON.stringify content
-
-        source.on 'open', ->
-          debug '__changes: open', key
-        source.on 'close', ->
-          debug '__changes: close', key
-        source.on 'error', (error) ->
-          debug '__changes: error', key, error
-
-        dispose = =>
-          debug '__changes: dispose', key
-          @cache.delete key
-          source.close()
+            {last_seq} = body
+            if last_seq?
+              query.since = last_seq
+            else
+              done = true
           return
-
-        stream = fromEventSource source,dispose
-
-        if cacheable
-          stream = stream.multicast()
-          @cache.set key, {stream,source}
-
-        stream
 
       getAttachment: (_id,file) ->
         uri = new URL ec(_id)+'/'+encodeURI(file), @uri+'/'
@@ -409,8 +396,6 @@ Build a continuous `most.js` stream for changes.
 
     module.exports = CouchDB
     ec = encodeURIComponent
-    EventSource = require '@shimaore/eventsource'
-    {fromEventSource} = require 'most-w3msg'
     {URL} = require 'url'
     Request = require 'superagent'
     changes_view = require './changes-view'
