@@ -321,31 +321,40 @@ Build a continuous `most.js` stream for changes.
 
         uri = new URL '_changes', @uri+'/'
         content = {}
+        key_options = {}
+
+        key_options.include_docs = true if options.include_docs
+        key_options.conflicts    = true if options.conflicts
+        key_options.attachments  = true if options.attachments
 
         uri.searchParams.set 'feed', 'eventsource'
         uri.searchParams.set 'heartbeat', 5*1000
-        uri.searchParams.set 'include_docs', options.include_docs ? false
-        uri.searchParams.set 'conflicts', true if options.conflicts
-        uri.searchParams.set 'attachments', true if options.attachments
+        uri.searchParams.set 'timeout', 30*1000
+        uri.searchParams.set 'include_docs', true if key_options.include_docs
+        uri.searchParams.set 'conflicts',    true if key_options.conflicts
+        uri.searchParams.set 'attachments',  true if key_options.attachments
 
         if options.filter?
           uri.searchParams.set 'filter', options.filter
+          key_options.filter = options.filter
 
         if options.selector?
           uri.searchParams.set 'filter', '_selector'
-          content = selector: options.selector
+          content =selector: options.selector
+          key_options.selector = options.selector
 
         if options.view?
           uri.searchParams.set 'filter', '_view'
           uri.searchParams.set 'view', options.view
+          key_options.view = options.view
 
         uri.searchParams.set 'since', options.since
 
         uri_string = uri.toString()
 
-        content_string = JSON.stringify content
+        key_string = JSON.stringify key_options
 
-        key = [uri_string,content_string].join ' '
+        key = [uri_string,key_string].join ' '
 
         cacheable = options.live and options.since is 'now'
         if cacheable and @cache.has key
@@ -356,7 +365,7 @@ Build a continuous `most.js` stream for changes.
         source = new EventSource uri_string,
           method: 'POST'
           headers: 'Content-Type': 'application/json'
-          content: content_string
+          content: JSON.stringify content
 
         source.on 'open', ->
           debug '__changes: open', key
