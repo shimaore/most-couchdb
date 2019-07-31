@@ -275,6 +275,50 @@
         await db.put _id:'tag', name:'lion'
         await result
 
+      it 'should query-changes (with timeout)', ->
+        @timeout 47*1000
+        map = (emit) ->
+          (doc) ->
+            if doc.name?
+              emit 'blurb', doc.name
+
+        result = db.query_changes map
+          .take 1
+          .observe (row) ->
+            row.should.have.property 'id', 'gutenTag'
+            row.should.have.property 'seq'
+            row.should.not.have.property 'doc'
+            row.should.have.property 'key', 'blurb'
+            row.should.have.property 'value', 'Katz'
+
+        await sleep 45*1000
+
+        await db.put _id:'gutenTag', name:'Katz'
+        await result
+
+      it 'should query-changes (with selector, with timeout)', ->
+        @timeout 47*1000
+
+        map = (emit) ->
+          (doc) ->
+            if doc.name?
+              emit 'blob', doc.name
+
+        result = db.query_changes map, include_docs:true, selector: _id: 'bumbling'
+          .take 1
+          .observe (row) ->
+            row.should.have.property 'id', 'bumbling'
+            row.should.have.property 'seq'
+            row.should.have.property 'doc'
+            row.should.have.property 'key', 'blob'
+            row.should.have.property 'value', 'larva'
+
+        await sleep 45*1000
+
+        await db.put _id:'massive', name:'mosquita'
+        await db.put _id:'bumbling', name:'larva'
+        await result
+
       it 'should query (with params)', ->
         for await row from db.queryStream null, '_all_docs', include_docs:true, startkey: 'hall', endkey: 'hello'
           (expect row).to.have.property 'id', 'hallo'
