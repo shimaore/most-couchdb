@@ -21,12 +21,11 @@
   "author": "stephane@shimaore.net",
   "license": "Unlicense",
   "dependencies": {
-    "@most/create": "^2.0.1",
     "async-stream-generator": "^1.0.3",
     "debug": "^4.1.1",
-    "eventemitter2": "^5.0.1",
     "lru-cache": "^5.1.1",
     "most": "^1.7.3",
+    "most-async-iterable": "^1.0.1",
     "superagent": "^5.0.2"
   },
   "devDependencies": {

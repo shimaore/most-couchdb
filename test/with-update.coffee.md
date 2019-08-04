@@ -4,7 +4,7 @@
 
     describe 'with-update', ->
       CouchDB = require '../with-update'
-      db = new CouchDB "http://#{process.env.COUCHDB_USER}:#{process.env.COUCHDB_PASSWORD}@couchdb:5984/example2"
+      db = new CouchDB "http://#{process.env.COUCHDB_USER ? 'admin'}:#{process.env.COUCHDB_PASSWORD ? 'password'}@couchdb:5984/example2"
       it 'should create the database', ->
         await db.create()
 

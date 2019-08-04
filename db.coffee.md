@@ -125,7 +125,7 @@ Basic support for Mango queries and indexes
 Non-blocking (most.js)
 
       find: (params) ->
-        mostify @findStream params
+        fromAsyncIterable @findAsyncIterable params
 
 Blocking (Stream)
 
@@ -156,8 +156,6 @@ Blocking (Stream)
                     body: null
               unless body?
                 await sleep 100
-              else
-                await sleep 1
 
             {docs} = body
             for doc from docs
@@ -166,6 +164,7 @@ Blocking (Stream)
             {bookmark} = body
 
             done = docs.length < limit
+            # await sleep 0 if not done
           return
 
       createIndex: (params) ->
@@ -181,7 +180,7 @@ Uses a server-side view, returns a stream containing one event for each row.
 Non-blocking (most.js)
 
       query: (app,view,params) ->
-        mostify @queryStream app, view, params
+        fromAsyncIterable @queryAsyncIterable app, view, params
 
 Blocking (Stream)
 
@@ -262,8 +261,6 @@ Build the ranges
                       body: null
                 unless body?
                   await sleep 100
-                else
-                  await sleep 1
 
               {rows} = body
 
@@ -278,6 +275,7 @@ Build the ranges
               if next_row?
                 query.startkey = next_row.key
                 query.startkey_docid = next_row.id
+                # await sleep 0
               else
                 done = true
                 delete query.startkey_docid
@@ -286,15 +284,35 @@ Build the ranges
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.
 Please provide `map_function(emit)`, wrapping the actual `map` function.
 
-      query_changes: (map_function,options = {}) ->
-        {since,filter,selector,view} = options
-        source = @changes {live:true,include_docs:true,since,filter,selector,view}
-        changes_view map_function, source, options
+      query_changes: (map_function,options) ->
+        fromAsyncIterable @query_changesAsyncIterable map_function, options
+
+      query_changesStream:  (map_function,options) ->
+        streamify @query_changesAsyncIterable map_function, options
+
+      query_changesAsyncIterable: (map_function,options) ->
+        {since,filter,selector,view,include_docs} = options ? {}
+        S = @changesAsyncIterable {live:true,include_docs:true,since,filter,selector,view}
+        for await {id,seq,deleted,doc} from S
+
+          out = []
+          emit = (key,value) ->
+            content = {id,seq,deleted,key,value}
+            content.doc = doc if include_docs
+            out.push content
+            return
+
+          fn = map_function emit
+
+          fn Object.assign {}, doc # might throw
+          for item in out
+            yield item
+        return
 
 Build a continuous, non-blocking (`most.js`) stream for changes.
 
       changes: (options) ->
-        mostify @changesStream options
+        fromAsyncIterable @changesAsyncIterable options
 
 Blocking (Stream)
 
@@ -356,8 +374,6 @@ Async Iterable
                     body: null
               unless body?
                 await sleep 100
-              else
-                await sleep 1
 
             {results} = body
             for result in results
@@ -366,6 +382,7 @@ Async Iterable
             {last_seq} = body
             if last_seq?
               query.since = last_seq
+              # await sleep 0
             else
               done = true
           return
@@ -398,9 +415,9 @@ Async Iterable
     ec = encodeURIComponent
     {URL} = require 'url'
     Request = require 'superagent'
-    changes_view = require './changes-view'
     debug = (require 'debug') 'most-couchdb'
     streamify = require 'async-stream-generator'
+    {fromAsyncIterable} = require 'most-async-iterable'
 
     stringify = (params) ->
       params = Object.assign {}, params ? {}
@@ -409,10 +426,3 @@ Async Iterable
           params[field] = JSON.stringify params[field]
         return
       params
-
-    most = require 'most'
-    mostify = (S) ->
-      data   = most.fromEvent 'data', S
-      errors = most.fromEvent('error', S).map most.throwError
-      end    = most.fromEvent 'end', S
-      data.merge(errors).until end
