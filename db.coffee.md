@@ -43,7 +43,7 @@ Parse options
 
         @limit = options.limit ? limit
 
-        {@repoll_interval} = options
+        {@poll_delay} = options
 
         if uri.match /\/$/
           @uri = uri.slice 0, -1
@@ -335,7 +335,7 @@ Async Iterable
 
         agent = @agent
         limit = @limit
-        repoll_interval = @repoll_interval
+        poll_delay = @poll_delay
 
         query = {}
         content = {}
@@ -392,7 +392,7 @@ Async Iterable
             {last_seq} = body
             if last_seq?
               query.since = last_seq
-              await sleep repoll_interval if repoll_interval?
+              await sleep poll_delay if poll_delay?
             else
               done = true
           return
