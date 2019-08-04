@@ -35,13 +35,22 @@ It provides exactly what this module needs, but no more.
 
     class CouchDB
 
-      constructor: (uri,use_lru,@limit = 100) ->
+      constructor: (uri,options,limit = 100) ->
+        options ?= {}
+        options = {use_lru: options} if typeof options is 'boolean' # legacy
+
+Parse options
+
+        @limit = options.limit ? limit
+
+        {@repoll_interval} = options
+
         if uri.match /\/$/
           @uri = uri.slice 0, -1
         else
           @uri = uri
 
-        if use_lru
+        if options.use_lru
           @cache = lru_cache
         else
           @cache = static_cache
@@ -382,7 +391,7 @@ Async Iterable
             {last_seq} = body
             if last_seq?
               query.since = last_seq
-              # await sleep 0
+              await sleep @repoll_interval if @repoll_interval?
             else
               done = true
           return
