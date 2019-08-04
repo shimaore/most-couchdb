@@ -260,6 +260,29 @@
         await result2
         return
 
+      it 'should query-changes (multiple times on the same)', ->
+        map = (emit) ->
+          (doc) ->
+            if doc.name?
+              emit 'pet', doc.name
+
+        result = db.query_changes map
+          .take 3
+          .observe (row) ->
+            row.should.have.property 'id'
+            row.should.have.property 'seq'
+            row.should.not.have.property 'doc'
+            row.should.have.property 'key', 'pet'
+            row.should.have.property 'value', 'jay'
+
+        await sleep 500
+
+        await db.put _id:'jay1', name:'jay'
+        await db.put _id:'jay2', name:'jay'
+        await db.put _id:'jay3', name:'jay'
+        await result
+        return
+
       it 'should query-changes (with docs explicitely)', ->
         map = (emit) ->
           (doc) ->
