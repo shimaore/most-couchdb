@@ -335,6 +335,7 @@ Async Iterable
 
         agent = @agent
         limit = @limit
+        repoll_interval = @repoll_interval
 
         query = {}
         content = {}
@@ -391,7 +392,7 @@ Async Iterable
             {last_seq} = body
             if last_seq?
               query.since = last_seq
-              await sleep @repoll_interval if @repoll_interval?
+              await sleep repoll_interval if repoll_interval?
             else
               done = true
           return
