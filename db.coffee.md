@@ -158,7 +158,7 @@ Blocking (Stream)
                 .send Object.assign {bookmark,limit}, params
                 .accept 'json'
                 .catch (error) ->
-                  debug 'findAsyncIterable: error', app, view, params, error
+                  debug 'findAsyncIterable: error', params, error
                   if error.status is 404
                     body: docs: []
                   else
