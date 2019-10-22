@@ -70,9 +70,12 @@ Parse options
         .accept 'json'
         .then ({body}) -> body
 
-      create: ->
+      create: (n) ->
+        query = {}
+        query.n = n if n?
         @agent
         .put @uri
+        .query query
         .accept 'json'
         .then ({body}) -> body
 

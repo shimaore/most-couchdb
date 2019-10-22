@@ -7,7 +7,7 @@
       db = new CouchDB "http://#{process.env.COUCHDB_USER ? 'admin'}:#{process.env.COUCHDB_PASSWORD ? 'password'}@couchdb:5984/example"
 
       it 'should create the database', ->
-        await db.create()
+        await db.create(2)
         return
 
       it 'should get info', ->
