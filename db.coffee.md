@@ -148,12 +148,13 @@ Blocking (Stream)
         uri = new URL '_find', @uri+'/'
 
         agent = @agent
-        limit = @limit
+        our_limit = @limit
 
         do ->
           bookmark = null
           done = false
           while not done
+            limit = our_limit
             body = null
             until body?
               {body} = await agent
@@ -162,10 +163,14 @@ Blocking (Stream)
                 .accept 'json'
                 .catch (error) ->
                   debug 'findAsyncIterable: error', params, error
-                  if error.status is 404
-                    body: docs: []
-                  else
-                    body: null
+                  switch
+                    when error.status is 404
+                      body: docs: []
+                    when error.code is 'ETOOLARGE'
+                      limit-- if limit > 1
+                      body: null
+                    else
+                      body: null
               unless body?
                 await sleep 100
 
@@ -208,7 +213,7 @@ Async Iterable
           uri = new URL view, @uri+'/'
 
         agent = @agent
-        limit = @limit
+        our_limit = @limit
 
         query = Object.assign {}, params
 
@@ -256,21 +261,25 @@ Build the ranges
             done = false
             while not done
 
-              query.limit ?= limit
+              limit = our_limit
               query.sorted = true
 
               body = null
               until body?
                 {body} = await agent
                   .get uri.toString()
-                  .query stringify query
+                  .query stringify Object.assign {limit}, query
                   .accept 'json'
                   .catch (error) ->
                     debug 'queryAsyncIterable: error', app, view, params, error
-                    if error.status is 404
-                      body: rows: []
-                    else
-                      body: null
+                    switch
+                      when error.status is 404
+                        body: rows: []
+                      when error.code is 'ETOOLARGE'
+                        limit-- if limit > 1
+                        body: null
+                      else
+                        body: null
                 unless body?
                   await sleep 100
 
@@ -283,6 +292,9 @@ Build the ranges
 
               for row in rows
                 yield row
+                if query.limit?
+                  query.limit--
+                  return if query.limit is 0
 
               if next_row?
                 query.startkey = next_row.key
@@ -337,7 +349,7 @@ Async Iterable
         uri = new URL '_changes', @uri+'/'
 
         agent = @agent
-        limit = @limit
+        our_limit = @limit
         poll_delay = @poll_delay
 
         query = {}
@@ -367,24 +379,29 @@ Async Iterable
             query.filter = '_doc_ids'
             content = doc_ids: options.doc_ids
 
-        query.since = options.since ? 'now'
+        since = options.since ? 'now'
 
         do ->
           done = false
           while not done
+            limit = our_limit
             body = null
             until body?
               {body} = await agent
                 .post uri.toString()
-                .query stringify query
+                .query stringify Object.assign {since,limit}, query
                 .send content
                 .accept 'json'
                 .catch (error) ->
                   debug 'changesAsyncIterable: error', options, error
-                  if error.status is 404
-                    body: results:[], last_seq: null
-                  else
-                    body: null
+                  switch
+                    when error.status is 404
+                      body: results:[], last_seq: null
+                    when error.code is 'ETOOLARGE'
+                      limit-- if limit > 1
+                      body: null
+                    else
+                      body: null
               unless body?
                 await sleep 100
 
@@ -394,7 +411,7 @@ Async Iterable
 
             {last_seq} = body
             if last_seq?
-              query.since = last_seq
+              since = last_seq
               await sleep poll_delay if poll_delay?
             else
               done = true
