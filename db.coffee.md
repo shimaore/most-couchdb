@@ -215,6 +215,7 @@ Async Iterable
 
         agent = @agent
         our_limit = @limit
+        poll_delay = @poll_delay
 
         query = Object.assign {}, params
 
@@ -300,7 +301,7 @@ Build the ranges
               if next_row?
                 query.startkey = next_row.key
                 query.startkey_docid = next_row.id
-                # await sleep 0
+                await sleep poll_delay if poll_delay?
               else
                 done = true
                 delete query.startkey_docid
