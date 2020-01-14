@@ -157,6 +157,7 @@ Blocking (Stream)
             limit = our_limit
             body = null
             until body?
+              return if params.cancel
               {body} = await agent
                 .post uri.toString()
                 .send Object.assign {bookmark,limit}, params
@@ -386,6 +387,7 @@ Async Iterable
             limit = our_limit
             body = null
             until body?
+              return if options.cancel
               {body} = await agent
                 .post uri.toString()
                 .query stringify Object.assign {since,limit}, query
