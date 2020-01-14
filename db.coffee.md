@@ -149,6 +149,7 @@ Blocking (Stream)
 
         agent = @agent
         our_limit = @limit
+        poll_delay = @poll_delay
 
         do ->
           bookmark = null
@@ -181,7 +182,7 @@ Blocking (Stream)
             {bookmark} = body
 
             done = docs.length < limit
-            # await sleep 0 if not done
+            await sleep poll_delay if poll_delay?
           return
 
       createIndex: (params) ->
