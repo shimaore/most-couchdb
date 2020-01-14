@@ -260,8 +260,7 @@ Build the ranges
             query.endkey = range.end_key
             query.inclusive_end = range.inclusive_end
 
-            done = false
-            while not done
+            loop
 
               limit = our_limit
               query.sorted = true
@@ -303,8 +302,8 @@ Build the ranges
                 query.startkey_docid = next_row.id
                 await sleep poll_delay if poll_delay?
               else
-                done = true
                 delete query.startkey_docid
+                break
           return
 
 Uses a wrapped client-side map function, returns a stream containing one event for each new row.
