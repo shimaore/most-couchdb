@@ -144,7 +144,7 @@ Blocking (Stream)
       findStream: (params) ->
         streamify @findAsyncIterable params
 
-      findAsyncIterable: (params) ->
+      findAsyncIterable: (params,cancel) ->
         uri = new URL '_find', @uri+'/'
 
         agent = @agent
@@ -157,7 +157,7 @@ Blocking (Stream)
             limit = our_limit
             body = null
             until body?
-              return if params.cancel
+              return if cancel?()
               {body} = await agent
                 .post uri.toString()
                 .send Object.assign {bookmark,limit}, params
@@ -346,7 +346,7 @@ Blocking (Stream)
 
 Async Iterable
 
-      changesAsyncIterable: (options) ->
+      changesAsyncIterable: (options,cancel) ->
         uri = new URL '_changes', @uri+'/'
 
         agent = @agent
@@ -387,7 +387,7 @@ Async Iterable
             limit = our_limit
             body = null
             until body?
-              return if options.cancel
+              return if cancel?()
               {body} = await agent
                 .post uri.toString()
                 .query stringify Object.assign {since,limit}, query
