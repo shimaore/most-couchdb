@@ -153,8 +153,7 @@ Blocking (Stream)
 
         do ->
           bookmark = null
-          done = false
-          while not done
+          loop
             limit = our_limit
             body = null
             until body?
@@ -181,7 +180,7 @@ Blocking (Stream)
 
             {bookmark} = body
 
-            done = docs.length < limit
+            return if docs.length < limit
             await sleep poll_delay if poll_delay?
           return
 
@@ -383,8 +382,7 @@ Async Iterable
         since = options.since ? 'now'
 
         do ->
-          done = false
-          while not done
+          loop
             limit = our_limit
             body = null
             until body?
@@ -411,11 +409,10 @@ Async Iterable
               yield result
 
             {last_seq} = body
-            if last_seq?
-              since = last_seq
-              await sleep poll_delay if poll_delay?
-            else
-              done = true
+            return if not last_seq?
+
+            since = last_seq
+            await sleep poll_delay if poll_delay?
           return
 
       getAttachment: (_id,file) ->
