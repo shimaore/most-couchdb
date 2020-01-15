@@ -179,6 +179,17 @@
           len.should.eql 664-34
           return
 
+      it "should queryAsyncIterable (keys,cancel)", ->
+          @timeout 6000
+          cancel = false
+          S = db.queryAsyncIterable "test2367", 'pages', keys: [34...664], -> cancel
+          len = 0
+          for await row from S
+            ++len
+            cancel = true if len > 10
+          len.should.be.below 15
+          return
+
       it 'should find', ->
         await db.put _id:'yippee', name:'coocoo'
         db.find selector: name: 'coocoo'

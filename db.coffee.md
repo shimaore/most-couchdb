@@ -207,7 +207,7 @@ Blocking (Stream)
 
 Async Iterable
 
-      queryAsyncIterable: (app,view,params) ->
+      queryAsyncIterable: (app,view,params,cancel) ->
         if app?
           uri = new URL "_design/#{app}/_view/#{view}", @uri+'/'
         else
@@ -267,6 +267,7 @@ Build the ranges
 
               body = null
               until body?
+                return if cancel?()
                 {body} = await agent
                   .get uri.toString()
                   .query stringify Object.assign {limit}, query
